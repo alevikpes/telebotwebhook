@@ -1,0 +1,57 @@
+version: '3.7'
+
+services:
+
+    teleautobot-app:
+        container_name: teleautobot-app
+        restart: unless-stopped
+        build:
+            context: ./app
+            dockerfile: Dockerfile
+        image: teleautobot-app-image
+        volumes:
+            - ./app:/app
+        env_file:
+            - ./environments/.env
+        networks:
+            - web_nw
+
+    teleautobot-nginx:
+        container_name: teleautobot-nginx
+        restart: unless-stopped
+        image: nginx
+        ports:
+            # local
+            - "8008:80"
+            # prod
+            #- "80:80"
+            #- "443:443"
+        volumes:
+            - ./nginx:/etc/nginx/conf.d
+            # prod, comment for local
+            #- ./certbot/conf:/etc/letsencrypt
+            #- ./certbot/www:/var/www/certbot
+        networks:
+            - web_nw
+        depends_on:
+            - teleautobot-app
+            # prod, comment for local
+            #- teleautobot-certbot
+        # prod, comment for local
+        #command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
+    # this whole service is for prod only, if a TLS certificate is desired
+    #teleautobot-certbot:
+    #    container_name: teleautobot-certbot
+    #    restart: unless-stopped
+    #    image: certbot/certbot
+    #    volumes:
+    #        - ./certbot/conf:/etc/letsencrypt
+    #        - ./certbot/www:/var/www/certbot
+    #    networks:
+    #        - web_nw
+    #    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+networks:
+    web_nw:
+        driver: bridge

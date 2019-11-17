@@ -1,0 +1,6 @@
+django
+djangorestframework
+pytest
+python-decouple
+requests
+uwsgi
